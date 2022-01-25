@@ -2,7 +2,8 @@ defmodule PaymentServerWeb.Schema.Mutations.WalletTest do
   use PaymentServer.DataCase
 
   alias PaymentServerWeb.Schema
-  alias PaymentServer.{Accounts, Payments}
+
+  import PaymentServerWeb.Support.AccountsPayments, only: [create_user: 1, create_currency: 1, create_wallets: 1]
 
   @create_wallets """
     mutation createWallets($amount: Integer!, $userId: Integer!, $currencyId: Integer!) {
@@ -13,8 +14,9 @@ defmodule PaymentServerWeb.Schema.Mutations.WalletTest do
   """
 
   describe "@create_wallets" do
-    test "creates a new wallet" do
-      [user, currency] = create_wallet()
+    setup [:create_user, :create_currency]
+
+    test "creates a new wallet", %{user: user, currency: currency} do
       assert {:ok, %{data: data}} = Absinthe.run(@create_wallets, Schema, variables: %{"userId" => user.id, "amount" => 100, "currencyId" => currency.id})
       assert data["createWallets"]["amount"] === "100.0"
     end
@@ -29,27 +31,13 @@ defmodule PaymentServerWeb.Schema.Mutations.WalletTest do
   """
 
   describe "@send_money" do
-    test "sends money from one wallet to another" do
-      [user1, user2, currency] = create_wallets()
+    setup [:create_wallets]
+
+    test "sends money from one wallet to another", %{user1: user1, user2: user2, currency: currency} do
       assert {:ok, %{data: data}} = Absinthe.run(@send_money, Schema, variables:
         %{"amount" => 20, "from" => user1.id, "to" => user2.id, "fromCurrencyId" => currency.id})
       assert data["sendMoney"] |> length === 2
       assert data["sendMoney"] === [%{"amount" => "180.0"}, %{"amount" => "120.0"}]
     end
-  end
-
-  defp create_wallet do
-    {:ok, user} = Accounts.create_user(%{email: "heritier@gmail.com", name: "NTWALI Heritier"})
-    {:ok, currency} = Payments.create_currency(%{symbol: "USD"})
-    [user, currency]
-  end
-
-  defp create_wallets do
-    {:ok, user1} = Accounts.create_user(%{email: "heritier@gmail.com", name: "NTWALI Heritier"})
-    {:ok, user2} = Accounts.create_user(%{email: "ishkev@gmail.com", name: "ISHIMWE Kevin"})
-    {:ok, currency} = Payments.create_currency(%{symbol: "USD"})
-    {:ok, _} = Payments.create_wallet(%{amount: 200, user_id: user1.id, currency_id: currency.id})
-    {:ok, _} = Payments.create_wallet(%{amount: 100, user_id: user2.id, currency_id: currency.id})
-    [user1, user2, currency]
   end
 end

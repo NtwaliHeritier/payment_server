@@ -5,6 +5,7 @@ defmodule PaymentServerWeb.Types.User do
   alias PaymentServer.Payments
 
   object :user do
+    field :id, :id
     field :name, :string
     field :email, :string
     field :wallets, list_of(:wallet), resolve: dataloader(Payments, :wallets)

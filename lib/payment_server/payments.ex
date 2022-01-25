@@ -1,16 +1,14 @@
 defmodule PaymentServer.Payments do
   alias PaymentServer.Repo
   alias PaymentServer.Payments.{Wallet, Currency}
+  alias EctoShorts.Actions
 
   def create_wallet(params) do
-    %Wallet{}
-    |> Wallet.changeset(params)
-    |> Repo.insert()
+    Actions.create(Wallet, params)
   end
 
-  def all_Wallets_by_user_id(user_id) do
-    Wallet.query_by_user_id(user_id)
-    |> Repo.all
+  def all_Wallets_by_user_id(params) do
+    Actions.all(Wallet, params)
   end
 
   def user_wallets_by_currency(user_id, currency_id) do
@@ -26,20 +24,16 @@ defmodule PaymentServer.Payments do
     |> Wallet.query_by_user_id()
     |> Wallet.join_currency()
     |> Wallet.select_amount_currency()
-    |> Repo.all()
+    |> Actions.all()
   end
 
   def update_wallet(wallet, params) do
-    wallet
-    |> Wallet.changeset(params)
-    |> Repo.update()
+    Actions.update(Wallet, wallet.id, params)
   end
 
   def create_currency(params) do
-    %Currency{}
-    |> Currency.changeset(params)
-    |> Repo.insert()
+    Actions.create(Currency, params)
   end
 
-  def get_currency(currency_id), do: Repo.get(Currency, currency_id)
+  def get_currency(currency_id), do:  Actions.get(Currency, currency_id)
 end

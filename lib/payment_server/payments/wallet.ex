@@ -11,6 +11,10 @@ defmodule PaymentServer.Payments.Wallet do
 
   @allowed_attributes [:amount, :user_id, :currency_id]
 
+  def create_changeset(params) do
+    changeset(%__MODULE__{}, params)
+  end
+
   def changeset(wallet, attrs) do
     wallet
     |> cast(attrs, @allowed_attributes)

@@ -5,11 +5,15 @@ defmodule PaymentServerWeb.Resolvers.UserResolver do
     {:ok, Accounts.all_users}
   end
 
+  def get_user(%{user_id: user_id}, _) do
+    {:ok, Accounts.get_user(user_id)}
+  end
+
   def create_user(params, _) do
-    case Accounts.create_user(params) do
-      {:ok, user} ->
+    with {:ok, user} <- Accounts.create_user(params) do
         {:ok, user}
-      {:error, _} ->
+    else
+      _ ->
         {:error, message: "Could not create user", details: "New user could not be created"}
     end
   end

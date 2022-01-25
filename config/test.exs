@@ -18,6 +18,6 @@ config :payment_server, PaymentServerWeb.Endpoint,
   http: [port: 4002],
   server: false
 
-  config :payment_server, source: PaymentServer.Exchange.PaymentFake
+  config :payment_server, source: PaymentServerWeb.Support.PaymentFake
 # Print only warnings and errors during test
 config :logger, level: :warn

@@ -35,8 +35,8 @@ defmodule PaymentServerWeb.Subscriptions.ExchangeTest do
 
   describe "@subscribe_exchange_rate_change" do
     test "shows realtime exchange rate for specific currencies", %{socket: socket} do
-      {:ok, from_currency} = Payments.create_currency(%{symbol: "USD"})
-      {:ok, to_currency} = Payments.create_currency(%{symbol: "EUR"})
+      assert {:ok, from_currency} = Payments.create_currency(%{symbol: "USD"})
+      assert {:ok, to_currency} = Payments.create_currency(%{symbol: "EUR"})
       ref = push_doc socket, @subscribe_exchange_rate_change, variables: %{"from" => from_currency.id, "to" => to_currency.id}
       assert_reply ref, :ok, %{subscriptionId: subscription_id}
       assert_push "subscription:data", data, 1000

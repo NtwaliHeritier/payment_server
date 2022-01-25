@@ -1,6 +1,7 @@
 defmodule PaymentServerWeb.Schema.Subscriptions.UserTest do
   use PaymentServerWeb.SubscriptionCase, async: true
-  alias PaymentServer.{Accounts, Payments}
+
+  import PaymentServerWeb.Support.AccountsPayments, only: [create_wallets: 1, create_user: 1, create_currency: 1]
 
   @create_wallets """
     mutation createWallets($amount: Integer!, $userId: Integer!, $currencyId: Integer!) {
@@ -27,8 +28,9 @@ defmodule PaymentServerWeb.Schema.Subscriptions.UserTest do
   """
 
   describe "@total_worth_change_by_user" do
-    test "shows real time data whenever user creates a new wallet", %{socket: socket} do
-      [user, currency] = create_wallet()
+    setup [:create_currency, :create_user]
+
+    test "shows real time data whenever user creates a new wallet", %{socket: socket, user: user, currency: currency} do
       ref = push_doc socket, @total_worth_change_by_user, variables: %{"userId" => user.id}
       assert_reply ref, :ok, %{subscriptionId: subscription_id}
       ref = push_doc socket, @create_wallets, variables: %{"userId" => user.id, "amount" => 100, "currencyId" => currency.id}
@@ -44,9 +46,12 @@ defmodule PaymentServerWeb.Schema.Subscriptions.UserTest do
                 result: %{data: %{"totalWorthChangeByUser" => [%{"amount" => "100.0"}]}}
               } = data
     end
+  end
 
-    test "shows real time data when transfering money", %{socket: socket} do
-      [user1, user2, currency] = create_wallets()
+  describe "@total_worth_change_by_user1" do
+    setup [:create_wallets]
+
+    test "shows real time data when transfering money", %{socket: socket, user1: user1, user2: user2, currency: currency} do
       ref = push_doc(socket, @total_worth_change_by_user, variables: %{"userId" => user1.id})
       assert_reply ref, :ok, %{subscriptionId: subscription_id}
       ref = push_doc(socket, @send_money, variables: %{"amount" => 20, "from" => user1.id, "to" => user2.id, "fromCurrencyId" => currency.id})
@@ -57,20 +62,5 @@ defmodule PaymentServerWeb.Schema.Subscriptions.UserTest do
         subscriptionId: ^subscription_id
       } = data
     end
-  end
-
-  defp create_wallet do
-    {:ok, user} = Accounts.create_user(%{email: "heritier@gmail.com", name: "NTWALI Heritier"})
-    {:ok, currency} = Payments.create_currency(%{symbol: "USD"})
-    [user, currency]
-  end
-
-  defp create_wallets do
-    {:ok, user1} = Accounts.create_user(%{email: "heritier@gmail.com", name: "NTWALI Heritier"})
-    {:ok, user2} = Accounts.create_user(%{email: "ishkev@gmail.com", name: "ISHIMWE Kevin"})
-    {:ok, currency} = Payments.create_currency(%{symbol: "USD"})
-    {:ok, _} = Payments.create_wallet(%{amount: 200, user_id: user1.id, currency_id: currency.id})
-    {:ok, _} = Payments.create_wallet(%{amount: 100, user_id: user2.id, currency_id: currency.id})
-    [user1, user2, currency]
   end
 end

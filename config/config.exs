@@ -13,6 +13,10 @@ config :payment_server,
 config :payment_server,
   symbols: ["CAD", "USD", "EUR"]
 
+config :ecto_shorts,
+  repo: PaymentServer.Repo,
+  error_module: EctoShorts.Actions.Error
+
 # Configures the endpoint
 config :payment_server, PaymentServerWeb.Endpoint,
   url: [host: "localhost"],

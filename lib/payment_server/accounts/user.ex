@@ -10,6 +10,10 @@ defmodule PaymentServer.Accounts.User do
 
   @allowed_attributes [:name, :email]
 
+  def create_changeset(params) do
+    changeset(%__MODULE__{}, params)
+  end
+
   def changeset(user, attrs) do
     user
     |> cast(attrs, @allowed_attributes)
