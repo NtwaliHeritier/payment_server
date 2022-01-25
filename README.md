@@ -1,19 +1,15 @@
 # PaymentServer
 
-To start your Phoenix server:
+This is a graphql api used to handle transactions. It fetches exchange rates of different currencies from an external api(they change every second), and uses OTP genservers to update the exchange each second.
 
-  * Install dependencies with `mix deps.get`
-  * Create and migrate your database with `mix ecto.setup`
-  * Start Phoenix endpoint with `mix phx.server`
+Built using:
+- Elixir
+- Phoenix
+- Absinthe/Graphql
 
-Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
-
-Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
-
-## Learn more
-
-  * Official website: https://www.phoenixframework.org/
-  * Guides: https://hexdocs.pm/phoenix/overview.html
-  * Docs: https://hexdocs.pm/phoenix
-  * Forum: https://elixirforum.com/c/phoenix-forum
-  * Source: https://github.com/phoenixframework/phoenix
+To run it locally:
+- clone this repo: `git clone https://github.com/NtwaliHeritier/payment_server`
+- Update your database credentials in config/dev.exs
+- Run `mix ecto.setup` to create and migrate your database
+- Run `mix phx.server` to start your server
+- Now you can visit [`localhost:4000`](http://localhost:4000) from your browser and use the graphql playground
