@@ -9,6 +9,7 @@ Built using:
 
 To run it locally:
 - clone this repo: `git clone https://github.com/NtwaliHeritier/payment_server`
+- Run `mix deps.get` and `mix deps.compile` to compile the dependencies.
 - Update your database credentials in config/dev.exs
 - Run `mix ecto.setup` to create and migrate your database
 - Run `mix phx.server` to start your server
