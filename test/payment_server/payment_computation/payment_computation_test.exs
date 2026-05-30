@@ -1,12 +1,26 @@
 defmodule PaymentServer.PaymentComputationTest do
-  use PaymentServer.DataCase, async: true
+  use PaymentServer.DataCase
+
+  import Mox
+
+  setup :set_mox_global
+  setup :verify_on_exit!
 
   alias PaymentServer.PaymentComputation
   alias PaymentServer.{Payments, Accounts}
 
   describe "&get_total_amount/2" do
     test "returns sum of amount in wallets" do
-      assert PaymentComputation.get_total_amount([{"USD", 200}, {"EUR", 300}], "USD") === 1140.02
+      expect(PaymentServer.HTTPClientMock, :get, fn url ->
+        assert url =~ "from=EUR"
+        {:ok,
+        %Req.Response{
+          status: 200,
+          body: %{"rates" => %{"USD" => 0.860}}
+        }}
+      end)
+
+      assert PaymentComputation.get_total_amount([{"USD", 200}, {"EUR", 300}], "USD") === 458.0
     end
   end
 

@@ -1,4 +1,4 @@
-use Mix.Config
+import Config
 
 # Configure your database
 #
@@ -6,8 +6,8 @@ use Mix.Config
 # to provide built-in test partitioning in CI environment.
 # Run `mix help test` for more information.
 config :payment_server, PaymentServer.Repo,
-  username: "hatsor",
-  password: "hatsor",
+  username: "postgres",
+  password: "postgres",
   database: "payment_server_test#{System.get_env("MIX_TEST_PARTITION")}",
   hostname: "localhost",
   pool: Ecto.Adapters.SQL.Sandbox
@@ -18,6 +18,6 @@ config :payment_server, PaymentServerWeb.Endpoint,
   http: [port: 4002],
   server: false
 
-  config :payment_server, source: PaymentServerWeb.Support.PaymentFake
+config :payment_server, :http_client, PaymentServer.HTTPClientMock
 # Print only warnings and errors during test
-config :logger, level: :warn
+config :logger, level: :warning

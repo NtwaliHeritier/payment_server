@@ -22,7 +22,7 @@ defmodule PaymentServerWeb do
       use Phoenix.Controller, namespace: PaymentServerWeb
 
       import Plug.Conn
-      import PaymentServerWeb.Gettext
+      use Gettext, backend: PaymentServerWeb.Gettext
       alias PaymentServerWeb.Router.Helpers, as: Routes
     end
   end
@@ -54,7 +54,7 @@ defmodule PaymentServerWeb do
   def channel do
     quote do
       use Phoenix.Channel
-      import PaymentServerWeb.Gettext
+      use Gettext, backend: PaymentServerWeb.Gettext
     end
   end
 
@@ -64,7 +64,7 @@ defmodule PaymentServerWeb do
       import Phoenix.View
 
       import PaymentServerWeb.ErrorHelpers
-      import PaymentServerWeb.Gettext
+      use Gettext, backend: PaymentServerWeb.Gettext
       alias PaymentServerWeb.Router.Helpers, as: Routes
     end
   end

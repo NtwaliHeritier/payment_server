@@ -5,7 +5,7 @@
 # is restricted to this project.
 
 # General application configuration
-use Mix.Config
+import Config
 
 config :payment_server,
   ecto_repos: [PaymentServer.Repo]
@@ -32,6 +32,9 @@ config :logger, :console,
 
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
+
+# http client
+config :payment_server, :http_client, PaymentServer.ReqHTTPClient
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

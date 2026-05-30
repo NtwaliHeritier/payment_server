@@ -6,7 +6,7 @@ defmodule PaymentServerWeb.Schema.Queries.WalletTest do
   import PaymentServerWeb.Support.AccountsPayments, only: [create_wallet: 1]
 
   @fetch_wallets """
-    query fetchWallets($userId: Integer!) {
+    query fetchWallets($userId: Int!) {
       fetchWallets(userId: $userId) {
         amount
       }
@@ -24,7 +24,7 @@ defmodule PaymentServerWeb.Schema.Queries.WalletTest do
   end
 
   @fetch_wallet_by_currency  """
-    query fetchWalletByCurrency($userId: Integer!, $currencyId: Integer!) {
+    query fetchWalletByCurrency($userId: Int!, $currencyId: Int!) {
       fetchWalletByCurrency(userId: $userId, currencyId: $currencyId) {
         amount
       }
@@ -41,7 +41,7 @@ defmodule PaymentServerWeb.Schema.Queries.WalletTest do
   end
 
   @fetch_total_worth """
-    query fetchTotalWorth($userId: Integer!, $currencyId: Integer!) {
+    query fetchTotalWorth($userId: Int!, $currencyId: Int!) {
       fetchTotalWorth(userId: $userId, currencyId: $currencyId)
     }
   """

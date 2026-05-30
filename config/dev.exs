@@ -1,9 +1,9 @@
-use Mix.Config
+import Config
 
 # Configure your database
 config :payment_server, PaymentServer.Repo,
-  username: "hatsor",
-  password: "hatsor",
+  username: "postgres",
+  password: "postgres",
   database: "payment_server_dev",
   hostname: "localhost",
   show_sensitive_data_on_connection_error: true,
@@ -22,7 +22,7 @@ config :payment_server, PaymentServerWeb.Endpoint,
   check_origin: false,
   watchers: []
 
-config :payment_server, source: PaymentServer.Exchange.PaymentHttp
+# config :payment_server, source: PaymentServer.Exchange.PaymentHttp
 
 # ## SSL Support
 #

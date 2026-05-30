@@ -15,10 +15,12 @@ defmodule PaymentServer.Application do
       {Phoenix.PubSub, name: PaymentServer.PubSub},
       # Start the Endpoint (http/https)
       PaymentServerWeb.Endpoint,
-      PaymentServer.PaymentComputation.ExchangeSupervisor,
-      {Absinthe.Subscription, [PaymentServerWeb.Endpoint]},
-      {Task.Supervisor, name: PaymentServer.TaskSupervisor}
-      # Start a worker by calling: PaymentServer.Worker.start_link(arg)
+      {Registry, keys: :unique, name: PaymentServer.ExchangeRegistry},
+      # PaymentServer.PaymentComputation.ExchangeSupervisor,
+      {DynamicSupervisor, name: PaymentServer.ExchangeMonitorSupervisor},
+      # {Absinthe.Subscription, [PaymentServerWeb.Endpoint]},
+      {Absinthe.Subscription, pubsub: PaymentServerWeb.Endpoint},
+      {Task.Supervisor, name: PaymentServer.TaskSupervisor}      # Start a worker by calling: PaymentServer.Worker.start_link(arg)
       # {PaymentServer.Worker, arg}
     ]
 
