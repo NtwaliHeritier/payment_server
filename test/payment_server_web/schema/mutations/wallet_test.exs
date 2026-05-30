@@ -6,7 +6,7 @@ defmodule PaymentServerWeb.Schema.Mutations.WalletTest do
   import PaymentServerWeb.Support.AccountsPayments, only: [create_user: 1, create_currency: 1, create_wallets: 1]
 
   @create_wallets """
-    mutation createWallets($amount: Integer!, $userId: Integer!, $currencyId: Integer!) {
+    mutation createWallets($amount: Float!, $userId: Int!, $currencyId: Int!) {
       createWallets(amount: $amount, userId: $userId, currencyId: $currencyId) {
         amount
       }
@@ -23,7 +23,7 @@ defmodule PaymentServerWeb.Schema.Mutations.WalletTest do
   end
 
   @send_money """
-    mutation sendMoney($amount: Float!, $from: Integer!, $to: Integer!, $fromCurrencyId: Integer!, $toCurrencyId: Int) {
+    mutation sendMoney($amount: Float!, $from: Int!, $to: Int!, $fromCurrencyId: Int!, $toCurrencyId: Int) {
       sendMoney(amount: $amount, from: $from, to: $to, fromCurrencyId: $fromCurrencyId, toCurrencyId: $toCurrencyId) {
         amount
       }
@@ -35,7 +35,7 @@ defmodule PaymentServerWeb.Schema.Mutations.WalletTest do
 
     test "sends money from one wallet to another", %{user1: user1, user2: user2, currency: currency} do
       assert {:ok, %{data: data}} = Absinthe.run(@send_money, Schema, variables:
-        %{"amount" => 20, "from" => user1.id, "to" => user2.id, "fromCurrencyId" => currency.id})
+        %{"amount" => 20.0, "from" => user1.id, "to" => user2.id, "fromCurrencyId" => currency.id})
       assert data["sendMoney"] |> length === 2
       assert data["sendMoney"] === [%{"amount" => "180.0"}, %{"amount" => "120.0"}]
     end

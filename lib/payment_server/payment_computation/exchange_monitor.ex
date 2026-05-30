@@ -7,8 +7,16 @@ defmodule PaymentServer.PaymentComputation.ExchangeMonitor do
     GenServer.start_link(__MODULE__, state, name: name)
   end
 
-  def get_exchange_rate(name) do
-    GenServer.call(name, :exchange_rate)
+  def get_exchange_rate(from, to) do
+    GenServer.call(name(from, to), :exchange_rate)
+  end
+
+  def exists?(from, to) do
+    if GenServer.whereis(name(from, to)), do: true, else: false
+  end
+
+  def start_exchange_monitor(from, to) do
+    DynamicSupervisor.start_child(PaymentServer.ExchangeMonitorSupervisor, {__MODULE__, {from, to}})
   end
 
   def init({from, to}) do
@@ -41,12 +49,9 @@ defmodule PaymentServer.PaymentComputation.ExchangeMonitor do
     {:noreply, state}
   end
 
-  defp get_latest_exchange_rate(from, to) do
-    exchange_rate = Exchange.fetch_exchange_rate(from, to)
-    exchange_rate
-  end
+  defp get_latest_exchange_rate(from, to), do: Exchange.fetch_exchange_rate(from, to)
 
-  defp name(from, to), do: :"#{from}/#{to}"
+  defp name(from, to), do: {:via, Registry, {PaymentServer.ExchangeRegistry, "#{from}/#{to}"}}
 
   defp propagate_changes(state) do
     Absinthe.Subscription.publish(

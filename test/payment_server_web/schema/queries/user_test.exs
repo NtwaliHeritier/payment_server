@@ -23,7 +23,7 @@ defmodule PaymentServerWeb.Schema.Queries.UserTest do
   end
 
   @user_query """
-    query fetchUser($userId: Integer!) {
+    query fetchUser($userId: Int!) {
       fetchUser(userId: $userId) {
         name
         email

@@ -4,7 +4,7 @@ defmodule PaymentServerWeb.Schema.Subscriptions.UserTest do
   import PaymentServerWeb.Support.AccountsPayments, only: [create_wallets: 1, create_user: 1, create_currency: 1]
 
   @create_wallets """
-    mutation createWallets($amount: Integer!, $userId: Integer!, $currencyId: Integer!) {
+    mutation createWallets($amount: Float!, $userId: Int!, $currencyId: Int!) {
       createWallets(amount: $amount, userId: $userId, currencyId: $currencyId) {
         amount
       }
@@ -12,7 +12,7 @@ defmodule PaymentServerWeb.Schema.Subscriptions.UserTest do
   """
 
   @send_money """
-    mutation sendMoney($amount: Float!, $from: Integer!, $to: Integer!, $fromCurrencyId: Integer!, $toCurrencyId: Int) {
+    mutation sendMoney($amount: Float!, $from: Int!, $to: Int!, $fromCurrencyId: Int!, $toCurrencyId: Int) {
       sendMoney(amount: $amount, from: $from, to: $to, fromCurrencyId: $fromCurrencyId, toCurrencyId: $toCurrencyId) {
         amount
       }
@@ -20,7 +20,7 @@ defmodule PaymentServerWeb.Schema.Subscriptions.UserTest do
   """
 
   @total_worth_change_by_user """
-    subscription totalWorthChangeByUser($userId: Integer!) {
+    subscription totalWorthChangeByUser($userId: Int!) {
       totalWorthChangeByUser(userId: $userId) {
         amount
       }
