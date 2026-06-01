@@ -2,6 +2,8 @@ defmodule PaymentServer.PaymentComputation.ExchangeMonitor do
   use GenServer
   alias PaymentServer.Exchange
 
+  require Logger
+
   def start_link({from, to} = state) do
     name = name(from, to)
     GenServer.start_link(__MODULE__, state, name: name)
@@ -19,11 +21,17 @@ defmodule PaymentServer.PaymentComputation.ExchangeMonitor do
     DynamicSupervisor.start_child(PaymentServer.ExchangeMonitorSupervisor, {__MODULE__, {from, to}})
   end
 
+  # callbacks
+
   def init({from, to}) do
+    state = %{from: from, to: to, exchange_rate: nil}
+    {:ok, state, {:continue, :initialize_exchange}}
+  end
+
+  def handle_continue(:initialize_exchange, %{from: from, to: to} = state) do
     exchange_rate = get_latest_exchange_rate(from, to)
     Process.send_after(self(), :refresh, :timer.seconds(1))
-    state = %{from: from, to: to, exchange_rate: exchange_rate}
-    {:ok, state}
+    {:noreply, %{state | exchange_rate: exchange_rate}}
   end
 
   def handle_call(:exchange_rate, _, state) do
@@ -38,9 +46,21 @@ defmodule PaymentServer.PaymentComputation.ExchangeMonitor do
     {:noreply, state}
   end
 
-  def handle_info({_, {:set_exchange, exchange_rate}}, state) do
+  def handle_info({ref, {:set_exchange, exchange_rate}}, state) when is_reference(ref) do
+    Process.demonitor(ref, [:flush])
     state = %{state | exchange_rate: exchange_rate}
     propagate_changes(state)
+    Process.send_after(self(), :refresh, :timer.seconds(1))
+    {:noreply, state}
+  end
+
+  def handle_info({:DOWN, _ref, :process, _pid, :normal}, state) do
+    IO.inspect "down normal"
+    {:noreply, state}
+  end
+
+  def handle_info({:DOWN, _ref, :process, _pid, reason}, state) do
+    Logger.error("Exchange rate fetch failed for #{state.from}/#{state.to}: #{inspect(reason)}")
     Process.send_after(self(), :refresh, :timer.seconds(1))
     {:noreply, state}
   end
