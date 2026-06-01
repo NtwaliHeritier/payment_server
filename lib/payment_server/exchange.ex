@@ -4,7 +4,7 @@ defmodule PaymentServer.Exchange do
     with {:ok, %Req.Response{body: body}} <- client.get("https://api.frankfurter.dev/v1/latest?from=#{from}&to=#{to}") do
         body["rates"][to]
     else
-      _ -> :error
+      _ -> raise "error"
     end
   end
 
