@@ -26,7 +26,7 @@ defmodule PaymentServer.PaymentComputation.ExchangeMonitor do
 
   def handle_continue(:initialize_exchange, %{from: from, to: to} = state) do
     state =
-      case get_latest_exchange_rate(from, to) do
+      case Exchange.fetch_exchange_rate(from, to) do
         {:ok, exchange_rate} ->
             %{state | exchange_rate: exchange_rate}
         {:error, reason} ->
@@ -80,8 +80,6 @@ defmodule PaymentServer.PaymentComputation.ExchangeMonitor do
   def handle_info(_, state) do
     {:noreply, state}
   end
-
-  defp get_latest_exchange_rate(from, to), do: Exchange.fetch_exchange_rate(from, to)
 
   defp name(from, to), do: {:via, Registry, {PaymentServer.ExchangeRegistry, "#{from}/#{to}"}}
 

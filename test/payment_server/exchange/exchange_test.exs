@@ -18,7 +18,8 @@ defmodule PaymentServer.ExchangeTest do
           body: %{"rates" => %{"CAD" => 0.81, "EUR" => 0.23}}
         }}
       end)
-      assert Exchange.fetch_exchange_rate("USD", "EUR") === 0.23
+      assert {:ok, exchange_rate} = Exchange.fetch_exchange_rate("USD", "EUR")
+      assert exchange_rate === 0.23
     end
   end
 end
