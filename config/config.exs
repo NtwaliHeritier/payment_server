@@ -10,8 +10,8 @@ import Config
 config :payment_server,
   ecto_repos: [PaymentServer.Repo]
 
-config :payment_server,
-  symbols: ["CAD", "USD", "EUR"]
+# config :payment_server,
+#   symbols: ["CAD", "USD", "EUR"]
 
 config :ecto_shorts,
   repo: PaymentServer.Repo,
@@ -34,8 +34,8 @@ config :logger, :console,
 config :phoenix, :json_library, Jason
 
 # http client
-config :payment_server, :http_client, PaymentServer.ReqHTTPClient
-# config :payment_server, :http_client, PaymentServer.FakeClient
+# config :payment_server, :http_client, PaymentServer.ReqHTTPClient
+config :payment_server, :http_client, PaymentServer.FakeClient
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

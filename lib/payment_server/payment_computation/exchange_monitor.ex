@@ -14,7 +14,10 @@ defmodule PaymentServer.PaymentComputation.ExchangeMonitor do
   end
 
   def start_exchange_monitor(from, to) do
-    DynamicSupervisor.start_child(PaymentServer.ExchangeMonitorSupervisor, {__MODULE__, {from, to}})
+    DynamicSupervisor.start_child(
+      PaymentServer.ExchangeMonitorSupervisor,
+      {__MODULE__, {from, to}}
+    )
   end
 
   # callbacks
@@ -28,17 +31,22 @@ defmodule PaymentServer.PaymentComputation.ExchangeMonitor do
     state =
       case Exchange.fetch_exchange_rate(from, to) do
         {:ok, exchange_rate} ->
-            %{state | exchange_rate: exchange_rate}
+          %{state | exchange_rate: exchange_rate}
+
         {:error, reason} ->
           Logger.error("Initial exchange rate fetch failed for #{from}/#{to}: #{inspect(reason)}")
           state
       end
+
     Process.send_after(self(), :refresh, :timer.seconds(1))
     {:noreply, state}
   end
 
   def handle_call(:exchange_rate, _, state) do
-    {:reply, state.exchange_rate, state}
+    case state.exchange_rate do
+      nil -> {:reply, {:error, :exchange_rate_not_available}, state}
+      exchange_rate -> {:reply, {:ok, exchange_rate}, state}
+    end
   end
 
   def handle_info(:refresh, %{pending_ref: ref} = state) when not is_nil(ref) do
@@ -47,20 +55,23 @@ defmodule PaymentServer.PaymentComputation.ExchangeMonitor do
   end
 
   def handle_info(:refresh, %{from: from, to: to} = state) do
-    %{ref: ref} = Task.Supervisor.async_nolink(PaymentServer.TaskSupervisor, fn ->
-      case Exchange.fetch_exchange_rate(from, to) do
-        {:ok, exchange_rate} -> {:set_exchange, exchange_rate}
-        {:error, reason} -> {:fetch_failed, reason}
-      end
-    end)
+    %{ref: ref} =
+      Task.Supervisor.async_nolink(PaymentServer.TaskSupervisor, fn ->
+        case Exchange.fetch_exchange_rate(from, to) do
+          {:ok, exchange_rate} -> {:set_exchange, exchange_rate}
+          {:error, reason} -> {:fetch_failed, reason}
+        end
+      end)
+
     {:noreply, %{state | pending_ref: ref}}
   end
 
   def handle_info({ref, {:set_exchange, exchange_rate}}, %{pending_ref: ref} = state) do
     Process.demonitor(ref, [:flush])
+    state = %{state | exchange_rate: exchange_rate, pending_ref: nil}
     propagate_changes(state)
     Process.send_after(self(), :refresh, :timer.seconds(1))
-    {:noreply, %{state | exchange_rate: exchange_rate, pending_ref: nil}}
+    {:noreply, state}
   end
 
   def handle_info({ref, {:fetch_failed, reason}}, %{pending_ref: ref} = state) do
@@ -70,7 +81,8 @@ defmodule PaymentServer.PaymentComputation.ExchangeMonitor do
     {:noreply, %{state | pending_ref: nil}}
   end
 
-  def handle_info({:DOWN, _ref, :process, _pid, reason}, state) when reason != :normal do
+  def handle_info({:DOWN, ref, :process, _pid, reason}, %{pending_ref: ref} = state)
+      when reason != :normal do
     Logger.error("Unexpected crash for #{state.from}/#{state.to}: #{inspect(reason)}")
     Process.send_after(self(), :refresh, :timer.seconds(1))
     {:noreply, %{state | pending_ref: nil}}
@@ -88,6 +100,7 @@ defmodule PaymentServer.PaymentComputation.ExchangeMonitor do
       state,
       subscribe_exchange_rate_change: "rate_update: #{state.from}/#{state.to}"
     )
+
     Absinthe.Subscription.publish(
       PaymentServerWeb.Endpoint,
       state,
