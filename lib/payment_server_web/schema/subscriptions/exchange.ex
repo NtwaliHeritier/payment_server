@@ -9,7 +9,7 @@ defmodule PaymentServerWeb.Schema.Subscriptions.Exchange do
       config fn %{from: from, to: to}, _ ->
         from_currency = Payments.get_currency(from)
         to_currency = Payments.get_currency(to)
-        {:ok, topic: "rate_update#{from_currency.symbol}/#{to_currency.symbol}"}
+        {:ok, topic: "rate_update: #{from_currency.symbol}/#{to_currency.symbol}"}
       end
     end
 

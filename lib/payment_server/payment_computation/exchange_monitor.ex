@@ -38,7 +38,7 @@ defmodule PaymentServer.PaymentComputation.ExchangeMonitor do
   end
 
   def handle_call(:exchange_rate, _, state) do
-    {:reply, state[:exchange_rate], state}
+    {:reply, state.exchange_rate, state}
   end
 
   def handle_info(:refresh, %{pending_ref: ref} = state) when not is_nil(ref) do
@@ -56,15 +56,14 @@ defmodule PaymentServer.PaymentComputation.ExchangeMonitor do
     {:noreply, %{state | pending_ref: ref}}
   end
 
-  def handle_info({ref, {:set_exchange, exchange_rate}}, state) when is_reference(ref) do
+  def handle_info({ref, {:set_exchange, exchange_rate}}, %{pending_ref: ref} = state) do
     Process.demonitor(ref, [:flush])
-    state = %{state | exchange_rate: exchange_rate, pending_ref: nil}
     propagate_changes(state)
     Process.send_after(self(), :refresh, :timer.seconds(1))
-    {:noreply, state}
+    {:noreply, %{state | exchange_rate: exchange_rate, pending_ref: nil}}
   end
 
-  def handle_info({ref, {:fetch_failed, reason}}, state) when is_reference(ref) do
+  def handle_info({ref, {:fetch_failed, reason}}, %{pending_ref: ref} = state) do
     Process.demonitor(ref, [:flush])
     Logger.error("Exchange rate fetch failed for #{state.from}/#{state.to}: #{inspect(reason)}")
     Process.send_after(self(), :refresh, :timer.seconds(1))
@@ -87,7 +86,7 @@ defmodule PaymentServer.PaymentComputation.ExchangeMonitor do
     Absinthe.Subscription.publish(
       PaymentServerWeb.Endpoint,
       state,
-      subscribe_exchange_rate_change: "rate_update#{state.from}/#{state.to}"
+      subscribe_exchange_rate_change: "rate_update: #{state.from}/#{state.to}"
     )
     Absinthe.Subscription.publish(
       PaymentServerWeb.Endpoint,
