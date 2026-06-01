@@ -20,7 +20,7 @@ defmodule PaymentServer.PaymentComputation.ExchangeMonitor do
   # callbacks
 
   def init({from, to}) do
-    state = %{from: from, to: to, exchange_rate: nil}
+    state = %{from: from, to: to, exchange_rate: nil, pending_ref: nil}
     {:ok, state, {:continue, :initialize_exchange}}
   end
 
@@ -34,17 +34,22 @@ defmodule PaymentServer.PaymentComputation.ExchangeMonitor do
     {:reply, state[:exchange_rate], state}
   end
 
+  def handle_info(:refresh, %{pending_ref: ref} = state) when not is_nil(ref) do
+    Process.send_after(self(), :refresh, :timer.seconds(1))
+    {:noreply, state}
+  end
+
   def handle_info(:refresh, %{from: from, to: to} = state) do
-    Task.Supervisor.async_nolink(PaymentServer.TaskSupervisor, fn ->
+    %{ref: ref} = Task.Supervisor.async_nolink(PaymentServer.TaskSupervisor, fn ->
       exchange_rate = get_latest_exchange_rate(from, to)
       {:set_exchange, exchange_rate}
     end)
-    {:noreply, state}
+    {:noreply, %{state | pending_ref: ref}}
   end
 
   def handle_info({ref, {:set_exchange, exchange_rate}}, state) when is_reference(ref) do
     Process.demonitor(ref, [:flush])
-    state = %{state | exchange_rate: exchange_rate}
+    state = %{state | exchange_rate: exchange_rate, pending_ref: nil}
     propagate_changes(state)
     Process.send_after(self(), :refresh, :timer.seconds(1))
     {:noreply, state}
@@ -53,7 +58,7 @@ defmodule PaymentServer.PaymentComputation.ExchangeMonitor do
   def handle_info({:DOWN, _ref, :process, _pid, reason}, state) when reason != :normal do
     Logger.error("Exchange rate fetch failed for #{state.from}/#{state.to}: #{inspect(reason)}")
     Process.send_after(self(), :refresh, :timer.seconds(1))
-    {:noreply, state}
+    {:noreply, %{state | pending_ref: nil}}
   end
 
   def handle_info(_, state) do
