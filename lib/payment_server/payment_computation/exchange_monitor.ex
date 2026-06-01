@@ -13,10 +13,6 @@ defmodule PaymentServer.PaymentComputation.ExchangeMonitor do
     GenServer.call(name(from, to), :exchange_rate)
   end
 
-  def exists?(from, to) do
-    if GenServer.whereis(name(from, to)), do: true, else: false
-  end
-
   def start_exchange_monitor(from, to) do
     DynamicSupervisor.start_child(PaymentServer.ExchangeMonitorSupervisor, {__MODULE__, {from, to}})
   end
@@ -54,12 +50,7 @@ defmodule PaymentServer.PaymentComputation.ExchangeMonitor do
     {:noreply, state}
   end
 
-  def handle_info({:DOWN, _ref, :process, _pid, :normal}, state) do
-    IO.inspect "down normal"
-    {:noreply, state}
-  end
-
-  def handle_info({:DOWN, _ref, :process, _pid, reason}, state) do
+  def handle_info({:DOWN, _ref, :process, _pid, reason}, state) when reason != :normal do
     Logger.error("Exchange rate fetch failed for #{state.from}/#{state.to}: #{inspect(reason)}")
     Process.send_after(self(), :refresh, :timer.seconds(1))
     {:noreply, state}

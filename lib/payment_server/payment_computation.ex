@@ -32,8 +32,10 @@ defmodule PaymentServer.PaymentComputation do
   defp get_exchange({currency, amount}, currency), do: amount
 
   defp get_exchange({from_currency, amount}, to_currency) do
-    if !ExchangeMonitor.exists?(from_currency, to_currency) do
-      ExchangeMonitor.start_exchange_monitor(from_currency, to_currency)
+    case ExchangeMonitor.start_exchange_monitor(from_currency, to_currency) do
+      {:ok, _pid} -> :ok
+      {:error, {:already_started, _pid}} -> :ok
+      {:error, reason} -> raise "Failed to start exchange monitor: #{inspect(reason)}"
     end
 
     exchange_rate = ExchangeMonitor.get_exchange_rate(from_currency, to_currency)
