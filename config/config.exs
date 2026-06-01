@@ -35,6 +35,7 @@ config :phoenix, :json_library, Jason
 
 # http client
 config :payment_server, :http_client, PaymentServer.ReqHTTPClient
+# config :payment_server, :http_client, PaymentServer.FakeClient
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
