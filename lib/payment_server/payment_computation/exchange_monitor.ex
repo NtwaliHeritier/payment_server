@@ -25,9 +25,16 @@ defmodule PaymentServer.PaymentComputation.ExchangeMonitor do
   end
 
   def handle_continue(:initialize_exchange, %{from: from, to: to} = state) do
-    exchange_rate = get_latest_exchange_rate(from, to)
+    state =
+      case Exchange.fetch_exchange_rate(from, to) do
+        {:ok, exchange_rate} ->
+            %{state | exchange_rate: exchange_rate}
+        {:error, reason} ->
+          Logger.error("Initial exchange rate fetch failed for #{from}/#{to}: #{inspect(reason)}")
+          state
+      end
     Process.send_after(self(), :refresh, :timer.seconds(1))
-    {:noreply, %{state | exchange_rate: exchange_rate}}
+    {:noreply, state}
   end
 
   def handle_call(:exchange_rate, _, state) do
@@ -41,8 +48,10 @@ defmodule PaymentServer.PaymentComputation.ExchangeMonitor do
 
   def handle_info(:refresh, %{from: from, to: to} = state) do
     %{ref: ref} = Task.Supervisor.async_nolink(PaymentServer.TaskSupervisor, fn ->
-      exchange_rate = get_latest_exchange_rate(from, to)
-      {:set_exchange, exchange_rate}
+      case Exchange.fetch_exchange_rate(from, to) do
+        {:ok, exchange_rate} -> {:set_exchange, exchange_rate}
+        {:error, reason} -> {:fetch_failed, reason}
+      end
     end)
     {:noreply, %{state | pending_ref: ref}}
   end
@@ -55,8 +64,15 @@ defmodule PaymentServer.PaymentComputation.ExchangeMonitor do
     {:noreply, state}
   end
 
-  def handle_info({:DOWN, _ref, :process, _pid, reason}, state) when reason != :normal do
+  def handle_info({ref, {:fetch_failed, reason}}, state) when is_reference(ref) do
+    Process.demonitor(ref, [:flush])
     Logger.error("Exchange rate fetch failed for #{state.from}/#{state.to}: #{inspect(reason)}")
+    Process.send_after(self(), :refresh, :timer.seconds(1))
+    {:noreply, %{state | pending_ref: nil}}
+  end
+
+  def handle_info({:DOWN, _ref, :process, _pid, reason}, state) when reason != :normal do
+    Logger.error("Unexpected crash for #{state.from}/#{state.to}: #{inspect(reason)}")
     Process.send_after(self(), :refresh, :timer.seconds(1))
     {:noreply, %{state | pending_ref: nil}}
   end
@@ -64,8 +80,6 @@ defmodule PaymentServer.PaymentComputation.ExchangeMonitor do
   def handle_info(_, state) do
     {:noreply, state}
   end
-
-  defp get_latest_exchange_rate(from, to), do: Exchange.fetch_exchange_rate(from, to)
 
   defp name(from, to), do: {:via, Registry, {PaymentServer.ExchangeRegistry, "#{from}/#{to}"}}
 
