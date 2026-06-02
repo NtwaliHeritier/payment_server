@@ -1,11 +1,19 @@
 defmodule PaymentServer.Exchange do
   def fetch_exchange_rate(from, to) do
     client = http_client()
+
     case client.get("https://api.frankfurter.dev/v1/latest?from=#{from}&to=#{to}") do
       {:ok, %Req.Response{body: body}} ->
-        {:ok, body["rates"][to]}
+        exchange_rate = body["rates"][to]
+
+        if is_number(exchange_rate) and exchange_rate > 0.0 do
+          {:ok, exchange_rate}
+        else
+          {:error, :invalid_exchange_rate}
+        end
+
       {:error, reason} ->
-        {:error, {:http_error, reason}}
+        {:error, reason}
     end
   end
 

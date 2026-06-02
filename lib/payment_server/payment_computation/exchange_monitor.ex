@@ -51,6 +51,7 @@ defmodule PaymentServer.PaymentComputation.ExchangeMonitor do
 
   def handle_info(:refresh, %{pending_ref: ref} = state) when not is_nil(ref) do
     Process.send_after(self(), :refresh, :timer.seconds(1))
+
     {:noreply, state}
   end
 
@@ -71,6 +72,7 @@ defmodule PaymentServer.PaymentComputation.ExchangeMonitor do
     state = %{state | exchange_rate: exchange_rate, pending_ref: nil}
     propagate_changes(state)
     Process.send_after(self(), :refresh, :timer.seconds(1))
+
     {:noreply, state}
   end
 
@@ -78,6 +80,7 @@ defmodule PaymentServer.PaymentComputation.ExchangeMonitor do
     Process.demonitor(ref, [:flush])
     Logger.error("Exchange rate fetch failed for #{state.from}/#{state.to}: #{inspect(reason)}")
     Process.send_after(self(), :refresh, :timer.seconds(1))
+
     {:noreply, %{state | pending_ref: nil}}
   end
 
@@ -85,6 +88,7 @@ defmodule PaymentServer.PaymentComputation.ExchangeMonitor do
       when reason != :normal do
     Logger.error("Unexpected crash for #{state.from}/#{state.to}: #{inspect(reason)}")
     Process.send_after(self(), :refresh, :timer.seconds(1))
+
     {:noreply, %{state | pending_ref: nil}}
   end
 
