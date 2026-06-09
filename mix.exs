@@ -20,8 +20,12 @@ defmodule PaymentServer.MixProject do
   def application do
     [
       mod: {PaymentServer.Application, []},
-      extra_applications: [:logger, :runtime_tools]
+      extra_applications: [:logger, :runtime_tools, :wx, :observer | dev_applications()]
     ]
+  end
+
+  defp dev_applications do
+    if Mix.env() == :dev, do: [:wx, :observer], else: []
   end
 
   # Specifies which paths to compile per environment.
