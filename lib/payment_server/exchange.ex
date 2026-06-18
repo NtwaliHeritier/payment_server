@@ -3,6 +3,9 @@ defmodule PaymentServer.Exchange do
     client = http_client()
 
     case client.get("https://api.frankfurter.dev/v1/latest?from=#{from}&to=#{to}") do
+      {:ok, %Req.Response{body: "error code" <> error_code}} ->
+        {:error, "error_code_#{error_code}"}
+
       {:ok, %Req.Response{body: body}} ->
         exchange_rate = body["rates"][to]
 

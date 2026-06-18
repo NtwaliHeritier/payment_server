@@ -7,7 +7,7 @@ defmodule PaymentServer.Payments do
     Actions.create(Wallet, params)
   end
 
-  def all_Wallets_by_user_id(params) do
+  def all_wallets_by_user_id(params) do
     Actions.all(Wallet, params)
   end
 
@@ -16,7 +16,7 @@ defmodule PaymentServer.Payments do
     |> Wallet.query_by_user_id()
     |> Wallet.join_currency()
     |> Wallet.get_wallets_by_currency(currency_id)
-    |> Repo.one
+    |> Repo.one()
   end
 
   def total_amount(user_id) do
@@ -35,5 +35,5 @@ defmodule PaymentServer.Payments do
     Actions.create(Currency, params)
   end
 
-  def get_currency(currency_id), do:  Actions.get(Currency, currency_id)
+  def get_currency(currency_id), do: Actions.get(Currency, currency_id)
 end

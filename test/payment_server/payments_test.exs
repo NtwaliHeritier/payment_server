@@ -9,7 +9,9 @@ defmodule PaymentServer.PaymentsTest do
     setup [:create_user, :create_currency]
 
     test "creates a new wallet", %{user: user, currency: currency} do
-      assert {:ok, wallet} = Payments.create_wallet(%{amount: 100, user_id: user.id, currency_id: currency.id})
+      assert {:ok, wallet} =
+               Payments.create_wallet(%{amount: 100, user_id: user.id, currency_id: currency.id})
+
       assert wallet.amount === 100.0
     end
 
@@ -18,12 +20,14 @@ defmodule PaymentServer.PaymentsTest do
     end
   end
 
-  describe "&all_Wallets_by_user_id/1" do
+  describe "&all_wallets_by_user_id/1" do
     setup [:create_user, :create_currency]
 
     test "returns list of wallets owned by a specific user", %{user: user, currency: currency} do
-      assert {:ok, wallet} = Payments.create_wallet(%{amount: 100, user_id: user.id, currency_id: currency.id})
-      assert Payments.all_Wallets_by_user_id(%{user_id: user.id}) === [wallet]
+      assert {:ok, wallet} =
+               Payments.create_wallet(%{amount: 100, user_id: user.id, currency_id: currency.id})
+
+      assert Payments.all_wallets_by_user_id(%{user_id: user.id}) === [wallet]
     end
   end
 
@@ -31,7 +35,9 @@ defmodule PaymentServer.PaymentsTest do
     setup [:create_user, :create_currency]
 
     test "returns user wallets by currency", %{user: user, currency: currency} do
-      assert {:ok, wallet} = Payments.create_wallet(%{amount: 100, user_id: user.id, currency_id: currency.id})
+      assert {:ok, wallet} =
+               Payments.create_wallet(%{amount: 100, user_id: user.id, currency_id: currency.id})
+
       assert Payments.user_wallets_by_currency(user.id, currency.id) === wallet
     end
   end
@@ -40,7 +46,9 @@ defmodule PaymentServer.PaymentsTest do
     setup [:create_user, :create_currency]
 
     test "returns tuple of currency and amount for each wallet", %{user: user, currency: currency} do
-      assert {:ok, wallet} = Payments.create_wallet(%{amount: 100, user_id: user.id, currency_id: currency.id})
+      assert {:ok, wallet} =
+               Payments.create_wallet(%{amount: 100, user_id: user.id, currency_id: currency.id})
+
       assert Payments.total_amount(user.id) === [{currency.symbol, wallet.amount}]
     end
   end
@@ -49,7 +57,9 @@ defmodule PaymentServer.PaymentsTest do
     setup [:create_user, :create_currency]
 
     test "updates a wallet", %{user: user, currency: currency} do
-      assert {:ok, wallet} = Payments.create_wallet(%{amount: 100, user_id: user.id, currency_id: currency.id})
+      assert {:ok, wallet} =
+               Payments.create_wallet(%{amount: 100, user_id: user.id, currency_id: currency.id})
+
       attrs = %{amount: 200}
       assert {:ok, %{amount: amount}} = Payments.update_wallet(wallet, attrs)
       assert amount === 200.0
