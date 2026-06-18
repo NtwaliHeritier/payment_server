@@ -11,7 +11,9 @@ defmodule PaymentServerWeb.Telemetry do
     children = [
       # Telemetry poller will execute the given period measurements
       # every 10_000ms. Learn more here: https://hexdocs.pm/telemetry_metrics
-      {:telemetry_poller, measurements: periodic_measurements(), period: 10_000}
+      {:telemetry_poller, measurements: periodic_measurements(), period: 10_000},
+      {TelemetryMetricsPrometheus,
+       metrics: metrics(), port: 9568, plug_cowboy_opts: [ip: {0, 0, 0, 0}]}
       # Add reporters as children of your supervision tree.
       # {Telemetry.Metrics.ConsoleReporter, metrics: metrics()}
     ]
@@ -41,7 +43,44 @@ defmodule PaymentServerWeb.Telemetry do
       summary("vm.memory.total", unit: {:byte, :kilobyte}),
       summary("vm.total_run_queue_lengths.total"),
       summary("vm.total_run_queue_lengths.cpu"),
-      summary("vm.total_run_queue_lengths.io")
+
+      # Custom metrics
+      distribution(
+        "payment_server.exchange_rate.fetch.stop.duration",
+        event_name: [:payment_server, :exchange_rate, :fetch, :stop],
+        measurement: :duration,
+        unit: {:native, :millisecond},
+        tags: [:currency_pair, :result],
+        reporter_options: [
+          buckets: [10, 25, 50, 100, 250, 500, 1000, 2500, 5000]
+        ]
+      ),
+      distribution(
+        "payment_server.transfer.stop.duration",
+        event_name: [:payment_server, :transfer, :stop],
+        measurement: :duration,
+        unit: {:native, :millisecond},
+        tags: [:currency_pair, :result],
+        reporter_options: [
+          buckets: [10, 25, 50, 100, 250, 500, 1000, 2500]
+        ]
+      ),
+      counter(
+        "payment_server.exchange_rate.fetch.stop.count",
+        event_name: [:payment_server, :exchange_rate, :fetch, :stop],
+        tags: [:currency_pair, :result]
+      ),
+      counter(
+        "payment_server.transfer.stop.count",
+        event_name: [:payment_server, :transfer, :stop],
+        tags: [:currency_pair, :result]
+      ),
+      last_value(
+        "payment_server.exchange_monitor.queue_length.size",
+        event_name: [:payment_server, :exchange_monitor, :queue_length],
+        measurement: :size
+      ),
+      last_value("vm.system_counts.process_count")
     ]
   end
 

@@ -4,7 +4,7 @@ defmodule PaymentServerWeb.Resolvers.WalletResolver do
   alias PaymentServer.Payments.Wallet
 
   def all_wallets_by_user_id(%{user_id: _user_id} = params, _) do
-    case Payments.all_Wallets_by_user_id(params) do
+    case Payments.all_wallets_by_user_id(params) do
       [] ->
         {:error,
          message: "No wallet found", details: "There is no wallet found for the provided input"}
@@ -50,16 +50,36 @@ defmodule PaymentServerWeb.Resolvers.WalletResolver do
   end
 
   def send_money(
-        %{amount: amount, from: from, to: to, from_currency_id: from_currency_id} = params,
+        %{
+          idempotency_key: idempotency_key,
+          amount: amount,
+          from: from,
+          to: to,
+          from_currency_id: from_currency_id
+        } = params,
         _
       ) do
     to_currency_id = Map.get(params, :to_currency_id, from_currency_id)
+    transfer_start_time = System.monotonic_time()
 
+    result = do_transfer(idempotency_key, from, to, amount, from_currency_id, to_currency_id)
+
+    :telemetry.execute(
+      [:payment_server, :transfer, :stop],
+      %{duration: System.monotonic_time() - transfer_start_time, amount: amount},
+      %{currency_pair: "#{from_currency_id}/#{to_currency_id}", result: elem(result, 0)}
+    )
+
+    result
+  end
+
+  defp do_transfer(idempotency_key, from, to, amount, from_currency_id, to_currency_id) do
     with %Wallet{} = from_wallet <- Payments.user_wallets_by_currency(from, from_currency_id),
          true <- PaymentComputation.check_if_sufficient_money(from_wallet.amount, amount),
          %Wallet{} = to_wallet <- Payments.user_wallets_by_currency(to, to_currency_id),
          {:ok, accounts} <-
            PaymentComputation.transfer_money(
+             idempotency_key,
              from_wallet,
              to_wallet,
              amount,
@@ -68,6 +88,8 @@ defmodule PaymentServerWeb.Resolvers.WalletResolver do
            ) do
       {:ok, accounts}
     else
+      nil -> {:error, message: "Wallet not found"}
+      false -> {:error, message: "Insufficient funds"}
       {:error, reason} -> {:error, message: "Transaction failed", details: reason}
     end
   end

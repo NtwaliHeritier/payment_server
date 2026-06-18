@@ -6,6 +6,8 @@ defmodule PaymentServer.Application do
   use Application
 
   def start(_type, _args) do
+    # PaymentServer.TelemetryHandler.attach()
+
     children = [
       # Start the Ecto repository
       PaymentServer.Repo,
@@ -20,7 +22,8 @@ defmodule PaymentServer.Application do
       {DynamicSupervisor, name: PaymentServer.ExchangeMonitorSupervisor},
       # {Absinthe.Subscription, [PaymentServerWeb.Endpoint]},
       {Absinthe.Subscription, pubsub: PaymentServerWeb.Endpoint},
-      {Task.Supervisor, name: PaymentServer.TaskSupervisor}      # Start a worker by calling: PaymentServer.Worker.start_link(arg)
+      # Start a worker by calling: PaymentServer.Worker.start_link(arg)
+      {Task.Supervisor, name: PaymentServer.TaskSupervisor}
       # {PaymentServer.Worker, arg}
     ]
 

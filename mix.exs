@@ -57,7 +57,8 @@ defmodule PaymentServer.MixProject do
       {:dataloader, "~> 1.0"},
       {:ecto_shorts, "~> 1.1"},
       {:req, "~> 0.5.18"},
-      {:mox, "~> 1.2"}
+      {:mox, "~> 1.2"},
+      {:telemetry_metrics_prometheus, "~> 1.1"}
     ]
   end
 
